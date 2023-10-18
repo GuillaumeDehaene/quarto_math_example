@@ -1,0 +1,221 @@
+---
+# Quarto documents include a preamble in yaml
+# This defines key information about the document and how to render it
+
+# Front matter documentation https://quarto.org/docs/authoring/front-matter.html
+title: "Complex Math documents in Quarto"
+date: 2023-10-14
+author: Guillaume P. Dehaene
+# The abstract text needs to be offset
+# The abstract may contain markdown
+# https://quarto.org/docs/authoring/front-matter.html#abstract
+abstract: |
+  This example document shows the right way to write complex Math documents in Quarto.
+
+  When I started Quarto, my objective was to port my existing latex files to Quarto.
+  I struggled with these requirements:
+
+    - having a single .qmd document to render both HTML and PDF
+    - using the `equation` and `align environments`
+    - numbering all equations in HTML
+    - labelling and refering to a single line of a multi-line equation.
+    - using macros
+  
+  This document shows what I believe to be the right solution to these requirements.
+  I hope that this document can make it easy for latex users writing complex math to transition to latex.
+  If you have any feedback, [please send me an email](mailto:guillaume.dehaene+quarto@gmail.com?subject=[Quarto user feedback]Quarto template feedback)
+
+# Name of the bibliography file
+bibliography: references.bib
+# The citation style can be customized
+# https://quarto.org/docs/authoring/footnotes-and-citations.html#sec-citations-style
+
+number-sections: true
+
+# Specific options for the different output formats
+# Latex macros need to be defined both for html and latex
+format:
+  pdf:
+    include-in-header:
+        # Latex preamble: import packages, define macros, etc
+        - text: |
+            \def\sumi{{\frac{1}{n} \sum_{i=1}^n}}
+  html:
+    include-in-header:
+        # Html preamble: configure MathJax
+        # This fragment is necessary to number equations that do not have a label
+        # https://github.com/quarto-dev/quarto-cli/discussions/4132
+        - text: |
+            <script>
+            MathJax = {
+                tex: {
+                    tags: 'ams'  // should be 'ams', 'none', or 'all'
+                }
+            };
+            </script>
+    include-before-body:
+        # define MathJax macros here
+        - text: |
+            $$
+                \def\sumi{{\frac{1}{n} \sum_{i=1}^n}}
+            $$
+
+# You can specify a license for the document
+license: "CC BY"
+---
+
+# An example document
+
+Welcome to this example document.
+When I started Quarto, my objective was to port my existing latex [@texbook; @latex2e; @latex:companion] files to Quarto.
+  I struggled with these requirements:
+
+  - having a single .qmd document to render both HTML and PDF
+  - using the `equation` and `align environments`
+  - numbering all equations in HTML
+  - labelling and refering to a single line of a multi-line equation.
+  - using macros
+
+I wrote this document to illustrate what I believe to be the right solution to these issues.
+This document does not aim to illustrate all of Quarto's syntax.
+Please refer to [the Quarto documentation instead](https://quarto.org/docs/guide/).
+In @sec-empirical-statistics, I present a simple example of a math theorem and proof.
+In @sec-explanations, I explain how to solve the issues I encountered.
+
+## Empirical mean and variance {#sec-empirical-statistics}
+
+
+Let $x_i$ be a dataset of values of $\mathbb{R}$. The empirical mean $m$ and variance $v$ are defined as:
+
+\begin{align}
+m   &= \sumi x_i \\
+v   &= \sumi (x_i - m)^2    \label{def-empirical-variance}
+\end{align}
+
+::: {#thm-label}
+
+## Alternative form
+
+The empirical variance can also be written as:
+
+\begin{equation}
+\label{eq:a}
+v = (\sumi x_i^2) - m^2
+\end{equation}
+
+:::
+
+::: {.proof}
+The proof is straightforward: we start from the original definition in eq.\eqref{def-empirical-variance} and expand the square.
+
+\begin{align}
+v   &= \sumi (x_i - m)^2 \\
+    &= \sumi (x_i^2 - 2 x_i m + m^2) \\
+    &= (\sumi x_i^2) - 2 (\sumi x_i) m + (\sumi 1) m^2 \\
+    &= (\sumi x_i^2) - 2 m m + 1 m^2 \\
+    &= (\sumi x_i^2) - m^2
+\end{align}
+
+This concludes the proof: we have indeed established the correctness of eq.\eqref{eq:a}.
+:::
+
+## Explanations {#sec-explanations}
+
+### Numbering equations in HTML
+
+In a HTML document, equations are rendered by [MathJax](https://www.mathjax.org/).
+By default, MathJax does not number equations.
+In order to number equations, we need to modify the MathJax configuration.
+A simple self-contained solution is to modify the yaml preamble of the qmd file. Please see the example below for the corresponding code.
+
+Please note, if your preamble becomes too complex, you can export it to a separate file.
+
+```yaml
+---
+format:
+  html:
+        - text: |
+            <script>
+            MathJax = {
+                tex: {
+                    tags: 'ams'  // should be 'ams', 'none', or 'all'
+                }
+            };
+            </script>
+---
+```
+
+### Macros
+
+Macros are necessary when writing complex math, both to simplify the source code and improve writing speed.
+It is tricky to define macros in Quarto.
+My solution (see example below) is to define macros in the yaml preamble, hard-coding them in the premable of the html and tex file.
+
+Please note that macros need to be written twice: once for html, once for tex.
+This approach also makes the macros invisible for Quarto.
+
+```yaml
+---
+format:
+    pdf:
+        include-in-header:
+            - text: |
+                \def\sumi{{\frac{1}{n} \sum_{i=1}^n}}
+    html:
+        include-before-body:
+            - text: |
+                $$
+                    \def\sumi{{\frac{1}{n} \sum_{i=1}^n}}
+                $$
+
+---
+```
+
+### Equation cross-references
+
+For equation cross-referencing, it is necessary to use the Latex `\label{label}` and `\eqref{label}` syntax,
+instead of the Quarto `@label` syntax. For example:
+
+```latex
+\begin{equation}
+    1 + 1 = 2
+\label{the_equation}
+\end{equation}
+
+Eq.\eqref{the_equation} is much deeper than it appears.
+```
+
+Please note that figure and section cross-referencing should use Quarto syntax.
+
+Also note that, if you do not number all equations, then you need to further add a `\tag` command.
+Otherwise, in HTML output, MathJax does not label the equation. The eqref then produces a `???` hyperlink to the correct equation.
+For example:
+
+```latex
+\begin{equation}
+    1 + 1 = 2
+\tag \label{the_equation}
+\end{equation}
+
+Eq.\eqref{the_equation} is much deeper than it appears.
+```
+
+### Citations
+
+Citations of the relevant litterature can either be:
+
+- separated from the text.
+
+    ```
+    Latex is a typesetting system [@texbook; @latex2e; @latex:companion].
+    ```
+    
+    Latex is a powerful typesetting system [@texbook; @latex2e; @latex:companion].
+
+- integrated in the text:
+
+    ```
+    @latex2e provides detailed information about Latex.
+    ```
+
+    @latex2e provides detailed information about Latex.
